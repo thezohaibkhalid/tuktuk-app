@@ -10,11 +10,15 @@ const formatPKR = (n: number) =>
 export function AddToCartBar({
   price,
   onAdd,
+  onViewCart,
   disabled,
+  added,
 }: {
   price: number;
   onAdd: () => void;
+  onViewCart?: () => void;
   disabled?: boolean;
+  added?: boolean;
 }) {
   const theme = useTheme();
   return (
@@ -34,17 +38,27 @@ export function AddToCartBar({
           {formatPKR(price)}
         </ThemedText>
       </View>
-      <Pressable
-        onPress={onAdd}
-        disabled={disabled}
-        style={[
-          styles.cta,
-          { backgroundColor: disabled ? theme.border : theme.primary },
-        ]}>
-        <ThemedText style={[styles.ctaText, { color: theme.secondary }]}>
-          {disabled ? 'Out of stock' : 'Add to cart'}
-        </ThemedText>
-      </Pressable>
+      {added && onViewCart ? (
+        <Pressable
+          onPress={onViewCart}
+          style={[styles.cta, { backgroundColor: theme.success }]}>
+          <ThemedText style={[styles.ctaText, { color: '#fff' }]}>
+            View cart
+          </ThemedText>
+        </Pressable>
+      ) : (
+        <Pressable
+          onPress={onAdd}
+          disabled={disabled}
+          style={[
+            styles.cta,
+            { backgroundColor: disabled ? theme.border : theme.primary },
+          ]}>
+          <ThemedText style={[styles.ctaText, { color: theme.secondary }]}>
+            {disabled ? 'Out of stock' : 'Add to cart'}
+          </ThemedText>
+        </Pressable>
+      )}
     </View>
   );
 }

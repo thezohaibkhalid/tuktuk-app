@@ -63,7 +63,11 @@ export type Product = {
   variants?: ProductVariant[];
   badges?: { name: string; color: string; slug: string }[];
   breadcrumbs?: { name: string; slug: string }[];
+  // Set by admin per product. allowCod=false disables Cash on Delivery for
+  // this product specifically. isCustomized marks made-to-order items, which
+  // also block COD (a customized item can't be returned/refunded easily).
   allowCod?: boolean;
+  isCustomized?: boolean;
 };
 
 export type ProductSearchParams = {

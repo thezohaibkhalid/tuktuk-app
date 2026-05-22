@@ -1,13 +1,15 @@
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   ScrollView,
   StyleSheet,
+  ToastAndroid,
   View,
+  Platform,
 } from 'react-native';
 
+import { Notice } from '@/components/Notice';
 import { ProductCard } from '@/components/ProductCard';
 import { AddToCartBar } from '@/components/product/AddToCartBar';
 import { Gallery } from '@/components/product/Gallery';
@@ -21,6 +23,7 @@ import {
   getRelatedProducts,
   type Product,
 } from '@/services/products';
+import { useCartStore } from '@/stores/cart';
 
 const formatPKR = (n: number) =>
   `Rs ${Math.round(n).toLocaleString('en-PK')}`;
@@ -28,8 +31,11 @@ const formatPKR = (n: number) =>
 export default function ProductDetailScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const theme = useTheme();
+  const router = useRouter();
+  const addToCart = useCartStore((s) => s.add);
   const [product, setProduct] = useState<Product | null | undefined>(undefined);
   const [related, setRelated] = useState<Product[]>([]);
+  const [justAdded, setJustAdded] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -108,7 +114,21 @@ export default function ProductDetailScreen() {
               {product.brand}
             </ThemedText>
           ) : null}
-          <ThemedText style={styles.name}>{product.name}</ThemedText>
+          <View style={styles.nameRow}>
+            <ThemedText style={styles.name}>{product.name}</ThemedText>
+            {product.isCustomized ? (
+              <View
+                style={[
+                  styles.customizedBadge,
+                  { backgroundColor: theme.secondary },
+                ]}>
+                <ThemedText
+                  style={[styles.customizedBadgeText, { color: theme.primary }]}>
+                  Customized
+                </ThemedText>
+              </View>
+            ) : null}
+          </View>
 
           {product.rating?.average ? (
             <RatingStars
@@ -159,6 +179,19 @@ export default function ProductDetailScreen() {
                 {product.stock < 10 ? ` · only ${product.stock} left` : ''}
               </ThemedText>
             </View>
+          ) : null}
+
+          {product.isCustomized ? (
+            <Notice
+              tone="info"
+              title="Made to order"
+              body="This item is customized for you. Cash on Delivery isn't available — please choose another payment method at checkout."
+            />
+          ) : product.allowCod === false ? (
+            <Notice
+              tone="info"
+              body="Cash on Delivery isn't available for this item."
+            />
           ) : null}
 
           {product.shortDescription ? (
@@ -225,12 +258,16 @@ export default function ProductDetailScreen() {
       <AddToCartBar
         price={displayPrice}
         disabled={outOfStock}
+        added={justAdded}
         onAdd={() => {
-          Alert.alert(
-            'Cart coming soon',
-            'Cart functionality is part of the next phase.',
-          );
+          addToCart({ product });
+          setJustAdded(true);
+          setTimeout(() => setJustAdded(false), 1500);
+          if (Platform.OS === 'android') {
+            ToastAndroid.show('Added to cart', ToastAndroid.SHORT);
+          }
         }}
+        onViewCart={() => router.push('/cart' as never)}
       />
     </ThemedView>
   );
@@ -260,10 +297,28 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     fontWeight: '700',
   },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: Spacing.two,
+  },
   name: {
     fontSize: 22,
     fontWeight: '800',
     lineHeight: 28,
+    flex: 1,
+  },
+  customizedBadge: {
+    paddingHorizontal: Spacing.two,
+    paddingVertical: 4,
+    borderRadius: Radius.sm,
+    marginTop: 4,
+  },
+  customizedBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
   },
   priceRow: {
     flexDirection: 'row',
