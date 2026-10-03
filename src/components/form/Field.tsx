@@ -29,6 +29,7 @@ export const Field = forwardRef<TextInput, Props>(function Field(
       </ThemedText>
       <TextInput
         ref={ref}
+        accessibilityLabel={label}
         placeholderTextColor={theme.textLight}
         {...rest}
         style={[

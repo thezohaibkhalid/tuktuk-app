@@ -1,6 +1,5 @@
 import { apiFetch } from './api';
 import {
-  getCategories,
   getCategoryShowcase,
   getCircleCategories,
   getHomeSliders,

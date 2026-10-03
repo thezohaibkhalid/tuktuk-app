@@ -1,4 +1,5 @@
 import { API_BASE_URL } from '@/lib/env';
+import { Platform } from 'react-native';
 import {
   clearTokens,
   getCachedAccessToken,
@@ -59,11 +60,12 @@ async function refreshAccessToken(): Promise<boolean> {
     try {
       const res = await fetch(`${API_BASE_URL}/auth/refresh`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
           // Backend reads refresh_token from cookies; mobile has no cookie
           // jar by default, so we set the header explicitly.
-          Cookie: `refresh_token=${refresh}`,
+          ...(Platform.OS !== 'web' ? { Cookie: `refresh_token=${refresh}` } : {}),
         },
       });
       if (!res.ok) return false;
@@ -98,8 +100,12 @@ export async function apiFetch<T>(
     ...(headers as Record<string, string> | undefined),
   };
   if (access) baseHeaders.Authorization = `Bearer ${access}`;
+  const refresh = !anonymous ? getCachedRefreshToken() : null;
+  if (refresh && Platform.OS !== 'web' && path === '/auth/logout') {
+    baseHeaders.Cookie = `refresh_token=${refresh}`;
+  }
 
-  const res = await fetch(url, { ...rest, headers: baseHeaders });
+  const res = await fetch(url, { credentials: 'include', ...rest, headers: baseHeaders });
 
   if (res.status === 401 && !anonymous && !skipRefresh && getCachedRefreshToken()) {
     const refreshed = await refreshAccessToken();

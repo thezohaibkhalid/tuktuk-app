@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Alert, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
@@ -55,6 +55,10 @@ export default function AccountScreen() {
   }
 
   const onLogout = () => {
+    if (Platform.OS === 'web') {
+      if (window.confirm('Log out?')) void logout();
+      return;
+    }
     Alert.alert('Log out?', 'You will need to sign in again to check out.', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Log out', style: 'destructive', onPress: () => void logout() },

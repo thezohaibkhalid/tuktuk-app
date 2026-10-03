@@ -34,17 +34,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   fieldErrors: null,
 
   hydrate: async () => {
-    const pair = await loadTokens();
-    if (!pair) {
-      set({ hydrated: true });
-      return;
-    }
     try {
+      const pair = await loadTokens();
+      if (!pair) {
+        set({ hydrated: true });
+        return;
+      }
       const user = await authApi.getMe();
       set({ user, hydrated: true });
     } catch {
       // Token may have expired and refresh failed — clear and stay logged out.
-      await clearTokens();
+      await clearTokens().catch(() => undefined);
       set({ user: null, hydrated: true });
     }
   },
